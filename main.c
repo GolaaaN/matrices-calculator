@@ -12,7 +12,7 @@ void processor(mat mats[6]){
 
 int main()
 {
-    mat mats[6];    
+    mat mats[MAT_NUM];    
     init_matrix(mats);
     processor(mats);
     return 0;
