@@ -1,8 +1,9 @@
 #include "input.h"
 
+char commands_names[COMMAND_NUM][20] = {{"read_mat"},{"print_mat"},{"add_mat"},{"sub_mat"},{"mul_mat"},{"mul_scalar"},{"trans_mat"},{"stop"}};
 
 void get_input(char input[]){
-	printf("Please enter a command:\n"); 
+	printf(YEL "mymat: "  RESET);
     if(fgets(input, COMMAND_MAX, stdin) == NULL) {
         return;
     }
@@ -23,6 +24,32 @@ int validate_input(char input[], mat mats[6]){
 	if(command_num == ERROR){
 		alert_error(UF_CMD_NAME);
 		return 1;
+	}
+	skip_token(&line);/*skip command*/
+	/*check comma*/
+	if(check_comma(line[0])){
+		alert_error(ILLEGAL_COMMA);
+		return 1;
+	}
+	while(line[0] != '\n'){
+		skip_spaces(&line);
+		skip_token(&line);
+		skip_spaces(&line);
+		if(!check_comma(line[0])){
+			skip_spaces(&line);
+			if(line[0] == '\n'){
+				break;
+			}
+			alert_error(MISS_COMMA);
+			return 1;
+		}
+		line++;
+		skip_spaces(&line);
+		if(check_comma(line[0])){
+			alert_error(MULT_CONSEC_COMMA);
+			return 1;
+		}
+
 	}
 	execute_command(command_num, input, mats);
 	return 0;
@@ -72,43 +99,19 @@ void stop(){
 } 
 
 void exec_print_mat(char input[], mat mats[]){
-	char *line = input;
-	char param[7];
-	int mat_index;
-	/*skip spaces*/
-	skip_spaces(&line);
-	/*skip command*/
-	skip_token(&line);
-	/*skip spaces*/
-	skip_spaces(&line);
-	/*check comma*/
-	if(check_comma(line[0])){
-		alert_error(ILLEGAL_COMMA);
-		return;
-	}
-	/*get parameter*/
-	get_parameter(line, param);
-	/*skip parameter*/
-	skip_token(&line);
-	/*validate_parameters*/
-	mat_index = validate_parameter(param, mats);
-	if(mat_index == ERROR){
-		alert_error(UF_MAT_NAME);
-		return;
-	}
-	/*check extra text*/
-	if(check_extra(line)) return;
-	/*exec*/
-	print_mat(mats[mat_index]);
+	int matrices[1];
+	if(get_valuess(input, matrices, 1, mats)) return;
+	print_mat(&mats[matrices[0]]);
 }
 
 int check_extra(char *p){
 	int i;
-	for(i=0; p[i] != ' ' && p[i] != '\t' && p[i] != '\n' && p[i] != EOF; i++){}
-		if(p[i] != '\n' && p[i] != EOF && p[i] != '\0'){
-			alert_error(EXTRA_TEXT);
-			return 1;
-		}
+	for(i=0; p[i] == ' ' || p[i] == '\t'; i++){}
+	if(p[i] != '\0' && p[i] != '\n'){
+		putchar(p[i]);
+		alert_error(EXTRA_TEXT);
+		return 1;
+	}
 	return 0;
 }
 
@@ -167,17 +170,135 @@ void get_command(char *p, char command[]){
 
 void skip_spaces(char **p){
 	int n;
-	for(n = 0; (*p)[n] != '\0' && ((*p)[n] == ' ' || (*p)[n] == '\t'); n++){}
+	for(n = 0; ((*p)[n] == ' ' || (*p)[n] == '\t'); n++){}
 	*p += n;
 }
 
+void exec_read_mat(char input[], mat mats[]){
+	double values[16];
+	int matrices[1];
+	if(get_values(input, matrices, values, 1, 16, mats)) return;
+	printf("%f",values[0]);
+	read_mat(&mats[matrices[0]], values);
+}
 
-void exec_read_mat(char input[], mat mats[]){}
-void exec_add_mat(char input[], mat mats[]){}
-void exec_sub_mat(char input[], mat mats[]){}
-void exec_mul_mat(char input[], mat mats[]){}
+int get_values(char input[], int matrices[] ,double values[], int m, int v, mat mats[]){
+	const char s[4] = " ,\t\n";
+	int mat_index;
+	char *token;
+	int k = 0;
+	int i = 0;
+	skip_spaces(&input);
+	skip_token(&input);
+	skip_spaces(&input);
+	token = strtok(input, s);
+	
+	if(token == NULL){
+			alert_error(MISS_ARG);
+			return 1;
+	}
+	if((mat_index = validate_parameter(token, mats)) == ERROR){
+			alert_error(UF_MAT_NAME);
+			return 1;
+	}
+	matrices[i] = mat_index;
+	for(i = 1; i < m; i++){
+		token = strtok(NULL, s);
+		if(token == NULL){
+			alert_error(MISS_ARG);
+			return 1;
+		}
+		if((mat_index = validate_parameter(token, mats)) == ERROR){
+			alert_error(UF_MAT_NAME);
+			return 1;
+		}
+		matrices[i] = mat_index; 
+	}
+	token = strtok(NULL, s);
+	if(token == NULL){
+		alert_error(MISS_ARG);
+		return 1;
+	}
+	while(token != NULL){
+		if(token != NULL && atof(token) == 0){
+			alert_error(ARG_N_REAL_NUM);
+			return 1;
+		}
+		if(token != NULL && k < v){
+			values[k] = atof(token);
+		} 
+		k++;
+		token = strtok(NULL, s);
+	}
+	return 0;
+}
+int get_valuess(char input[], int matrices[], int m, mat mats[]){
+	const char s[4] = " ,\t\n";
+	int mat_index;
+	char *token;
+	int i=0;
+	skip_spaces(&input);
+	skip_token(&input);
+	skip_spaces(&input);
+
+	token = strtok(input, s);
+	if(token == NULL){
+			alert_error(MISS_ARG);
+			return 1;
+	}
+	if((mat_index = validate_parameter(token, mats)) == ERROR){
+			alert_error(UF_MAT_NAME);
+			return 1;
+	}
+	matrices[i] = mat_index;
+	for(i = 1; i < m; i++){
+		token = strtok(NULL, s);
+		if(token == NULL){
+			alert_error(MISS_ARG);
+			return 1;
+		}
+		if((mat_index = validate_parameter(token, mats)) == ERROR){
+			alert_error(UF_MAT_NAME);
+			return 1;
+		}
+		matrices[i] = mat_index; 
+	}	
+	token = strtok(NULL, " \t\n");
+	if(token != NULL){
+		alert_error(EXTRA_TEXT);
+		return 1;
+	}
+	return 0;
+}
+
+
+
+void exec_add_mat(char input[], mat mats[]){
+	int matrices[3];
+	if(get_valuess(input, matrices, 3, mats)) return;
+	add_mat(&mats[matrices[0]], &mats[matrices[1]], &mats[matrices[2]]);
+}
+
+
+void exec_sub_mat(char input[], mat mats[]){
+	int matrices[3];
+	if(get_valuess(input, matrices, 3, mats)) return;
+	sub_mat(&mats[matrices[0]], &mats[matrices[1]], &mats[matrices[2]]);
+}
+
+
+void exec_mul_mat(char input[], mat mats[]){
+	int matrices[3];
+	if(get_valuess(input, matrices, 3, mats)) return;
+	mul_mat(&mats[matrices[0]], &mats[matrices[1]], &mats[matrices[2]]);
+
+}
+void exec_trans_mat(char input[], mat mats[]){
+	int matrices[2];
+	if(get_valuess(input, matrices, 2, mats)) return;
+	trans_mat(&mats[matrices[0]], &mats[matrices[1]]);
+}
 void exec_mul_scalar(char input[], mat mats[]){}
-void exec_trans_mat(char input[], mat mats[]){}
 
 
 void alert_error(int error){
@@ -221,6 +342,8 @@ void alert_error(int error){
 	printf("\n");
 	return;
 }
+
+
 
 
 
