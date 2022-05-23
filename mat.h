@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #define SIZE 4
+#define MAT_NUM 6
 
 struct mat{
     char name[6];
@@ -47,6 +48,12 @@ void mul_mat(mat *A, mat *B, mat *C);
  */
 void trans_mat(mat *A, mat *B);
 /**
+ * multiply A by scalar and puts it in B.
+ * param - pointer to matrix, scalar, pointer to matrix.
+ * return.
+ */
+void mul_scalar(mat *A, double s, mat *B);
+/**
  * reads to mat A the values.
  * param - pointer to matrix, values array to save the values.
  * return.
@@ -58,6 +65,12 @@ void read_mat(mat *A, double values[]);
  * return.
  */
 void reset(double matrix[4][4]);
+/**
+ * copies mat a to mat b matrix.
+ * param - pointer to matrix, pointer to matrix.
+ * return.
+ */
+void copy_mat(mat *A, mat *B);
 
 #endif
 

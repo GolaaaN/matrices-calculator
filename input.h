@@ -4,10 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "mat.h"
-
-enum commands {READ_MAT, PRINT_MAT, ADD_MAT, SUB_MAT, MUL_MAT, MUL_SCALAR, TRANS_MAT, STOP};
-enum errors {ERROR = -1 ,UF_MAT_NAME, UF_CMD_NAME, ARG_N_REAL_NUM, EXTRA_TEXT, MISS_ARG, MISS_COMMA, ILLEGAL_COMMA, MULT_CONSEC_COMMA, ARG_N_SCALAR};
-
+#include "execute.h"
+#define COMMAND_MAX 1000
+#define COMMAND_NUM 8
 
 /**
  * gets the input from the user and saves it in the given input array.
@@ -33,7 +32,11 @@ void alert_error(int error);
  * return.
  */
 void skip_spaces(char **p);
-
+/**
+ * gets the command.
+ * param - input, command array to store the command.
+ * return.
+ */
 void get_command(char *p, char command[]);
 /**
  * validates the command.
@@ -47,8 +50,6 @@ int validate_command(char command[]);
  * return - 0 if it does and 1 if doesn't.
  */
 int check_comma(char c);
-
-void get_parameter(char *p, char param[]);
 /**
  * skips token.
  * param - address of pointer to the start of the array.
@@ -56,83 +57,62 @@ void get_parameter(char *p, char param[]);
  */
 void skip_token(char **p);
 /**
- * validate the matrix name.
+ * skips command or token.
+ * param - address of pointer.
+ * return.
+ */
+void skip_command(char **p);
+/**
+ * validates the matrix name.
  * param - matrix, mats.
  * return - returns -1 in ERROR and the matrix index in success.
  */
 int validate_parameter(char param[], mat mats[]);
-
+/**
+ * checks extra text for 0 paramaters commands.
+ * param - char pointer.
+ * return - returns 1 in false and 0 in true.
+ */
 int check_extra(char *p);
-int get_values(char input[], int matrices[] ,double values[], int m, int v, mat mats[]);
-int get_valuess(char input[], int matrices[], int m, mat mats[]);
-
-
 /**
- * command handler.
- * param - command num, input, mats.
- * return.
+ * get all the arguments for matrices & values commands.
+ * param - input, mats arr, values arr, num of mats, num of max values, the matrices.
+ * return - return - returns 1 in false and 0 in true.
  */
-void execute_command(int command, char input[], mat mats[6]); /*0*/
+int get_arguments_mv(char input[], int matrices[] ,double values[], int m, int v, mat mats[]);
 /**
- * command handler.
- * param - command num, input, mats.
- * return.
+ * get all the arguments for matrices commands.
+ * param - input, mats arr, num of mats, the matrices.
+ * return - return - returns 1 in false and 0 in true.
  */
-void exec_print_mat(char input[], mat mats[]); /*0*/
+int get_arguments_m(char input[], int matrices[], int m, mat mats[]);
 /**
- * exectue command print_mat.
- * param - input, mats.
- * return.
+ * get all the arguments for matrices & values commands.
+ * param - input, mats arr, double scalar, the matrices.
+ * return - return - returns 1 in false and 0 in true.
  */
-void exec_read_mat(char input[], mat mats[]); /*X*/
+int get_arguments_mvs(char input[], int matrices[2], double *scalar, mat mats[]);
 /**
- * exectue command red_mat.
- * param - input, mats.
- * return.
+ * validates that string text is double.
+ * param - string.
+ * return - return - returns 1 in false and 0 in true.
  */
-void exec_add_mat(char input[], mat mats[]); /*0*/
+int is_num(char *str);
 /**
- * execute command add_mat.
- * param - input, mats.
- * return.
+ * validates the input form.
+ * param - input, min arguments.
+ * return - return - returns 1 in false and 0 in true.
  */
-void exec_sub_mat(char input[], mat mats[]); /*0*/
-/**
- * execute command mul_mat.
- * param - input, mats.
- * return.
- */
-void exec_mul_mat(char input[], mat mats[]); /*0*/
-/**
- * execute command mul_scalar.
- * param - input, mats.
- * return.
- */
-void exec_mul_scalar(char input[], mat mats[]);/*X*/
-/**
- * execute command trans_mat.
- * param - input, mats.
- * return.
- */
-void exec_trans_mat(char input[], mat mats[]); /*0*/
+int validate_input_form(char input[], int min_args);
 /**
  * stops the program.
- * param - input, mats.
+ * param.
  * return.
  */
-void stop(); /*0*/
-#define COMMAND_MAX 100
-#define COMMAND_NUM 8
-#define MAT_NUM 6
-#define RED   "\x1B[31m"
-#define RESET "\x1B[0m"
-#define GRN   "\x1B[32m"
-#define YEL   "\x1B[33m"
-#define BLU   "\x1B[34m"
-#define MAG   "\x1B[35m"
-#define CYN   "\x1B[36m"
-#define WHT   "\x1B[37m"
+void stop(); 
 
-/**/
+enum commands {READ_MAT, PRINT_MAT, ADD_MAT, SUB_MAT, MUL_MAT, MUL_SCALAR, TRANS_MAT, STOP};
+enum errors {ERROR = -1 ,UF_MAT_NAME, UF_CMD_NAME, ARG_N_REAL_NUM, EXTRA_TEXT, MISS_ARG, MISS_COMMA, ILLEGAL_COMMA, MULT_CONSEC_COMMA, ARG_N_SCALAR, ALLOC_FAILD};
+
 
 #endif
